@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <AzureFunctionsVersion>v3</AzureFunctionsVersion>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Azure.Storage.Queues" Version="12.5.0" />
+        <PackageReference Include="Fennel" Version="0.2.0" />
+        <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="4.0.3" />
+        <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.11" />
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="host.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="local.settings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+        </Content>
+    </ItemGroup>
+    <ItemGroup>
+      <Compile Include="Prometheus.fs" />
+    </ItemGroup>
+</Project>
