@@ -20,6 +20,7 @@
         </Content>
     </ItemGroup>
     <ItemGroup>
-      <Compile Include="Prometheus.fs" />
+      <Compile Include="PrometheusLogBuilder.fs" />
+      <Compile Include="Functions.fs" />
     </ItemGroup>
 </Project>
