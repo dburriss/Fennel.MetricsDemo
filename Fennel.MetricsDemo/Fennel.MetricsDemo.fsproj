@@ -6,6 +6,7 @@
     <ItemGroup>
         <PackageReference Include="Azure.Storage.Queues" Version="12.5.0" />
         <PackageReference Include="Fennel" Version="0.2.0" />
+        <PackageReference Include="FSharp.Json" Version="0.4.0" />
         <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="4.0.3" />
         <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.11" />
     </ItemGroup>

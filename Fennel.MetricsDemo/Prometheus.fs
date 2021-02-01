@@ -54,30 +54,22 @@ type PrometheusLogBuilder() =
 module Prometheus =
     
     let mutable types = Some [
-        Prometheus.help "sale_count" "Number of sales that have occurred."
-        Prometheus.typeHint "sale_count" MetricType.Counter
+        Prometheus.help "demo_sale_count" "Number of sales that have occurred."
+        Prometheus.typeHint "demo_sale_count" MetricType.Counter
     ]
     let metricsBuilder = PrometheusLogBuilder()
-                            .Define("sale_count", MetricType.Counter, "Number of sales that have occurred.")
+                            .Define("demo_sale_count", MetricType.Counter, "Number of sales that have occurred.")
     let queueMetrics (queue : ICollector<string>) ms = queue.Add(ms |> String.concat "\n")
         
     [<FunctionName("MetricsGenerator")>]
     let metricsGenerator([<TimerTrigger("*/6 * * * * *")>]myTimer: TimerInfo, [<Queue("logs")>] queue : ICollector<string>, log: ILogger) =
         let msg = sprintf "Generating sales at: %A" DateTime.Now
         log.LogInformation msg
-        let qMetrics = queueMetrics queue
-//        match types with
-//        | None -> ()
-//        | Some ts -> 
-//            qMetrics ts
-//            //types <- None
-        let rnd = Random()
-        let sales = rnd.Next(0, 50) |> float
-        
-//        qMetrics [ Prometheus.metricSimple "sale_count" sales ]
-        queue.Add( metricsBuilder.Stringify [|
-            Line.metric (MetricName "sale_count") (MetricValue.FloatValue sales) [] None
-        |] )
+        let sales = Random().Next(0, 50) |> float
+        let promLogs = metricsBuilder.Stringify [|
+            Line.metric (MetricName "demo_sale_count") (MetricValue.FloatValue sales) [] None
+        |]
+        queue.Add(promLogs)
         log.LogInformation (sprintf "Sales : %f" sales)
 
     [<FunctionName("metrics")>]
