@@ -14,6 +14,14 @@ open Azure.Storage.Queues
 
 type PrometheusLogBuilder() =
     let definitions = Dictionary<MetricName,(MetricType * DocString option)> ()
+    
+    let toMetrics (ss : string array) =[|
+        for s in ss do
+            match (Prometheus.parseLine s) with
+            | Ok x -> yield x
+            | Error err -> Diagnostics.Debug.WriteLine(err)
+        |]
+    
     member this.Define(name, metricType, ?helpText) =
         let k = MetricName name
         let help = Option.map DocString helpText
@@ -21,9 +29,9 @@ type PrometheusLogBuilder() =
             definitions.[k] = (metricType,help) |> ignore
         else definitions.Add(k, (metricType,help))
         this
-        
-    member this.Stringify (metrics : Line array) =
-        let set = Set.empty<MetricName>
+    
+    member this.Build (smetrics : string array) =
+        let mutable set = Set.empty<MetricName>
         let insertInfo = function
             | Help _ | Type _ | Comment _ | Blank -> Array.empty
             | Metric m ->
@@ -33,10 +41,12 @@ type PrometheusLogBuilder() =
                         let (t, doc) = definitions.[m.Name]
                         let help = doc |> Option.map (fun d -> Line.Help (m.Name, d))
                         let metricType = Line.Type (m.Name, t)
-                        [| help ; Some metricType |] |> Array.choose id
+                        set <- set.Add m.Name
+                        let info = [| help ; Some metricType |] |> Array.choose id
+                        info
                     else failwithf "%A not defined for this builder." m
             
-        metrics
+        smetrics |> toMetrics
         |> Array.map (fun m -> Array.append (insertInfo m) [|m|])
         |> Array.concat
         |> Array.map Line.asString
@@ -66,29 +76,34 @@ module Prometheus =
         let msg = sprintf "Generating sales at: %A" DateTime.Now
         log.LogInformation msg
         let sales = Random().Next(0, 50) |> float
-        let promLogs = metricsBuilder.Stringify [|
-            Line.metric (MetricName "demo_sale_count") (MetricValue.FloatValue sales) [] None
-        |]
-        queue.Add(promLogs)
+        let metric = Line.metric (MetricName "demo_sale_count") (MetricValue.FloatValue sales) [] (Some(Timestamp DateTimeOffset.UtcNow))
+
+        queue.Add(Line.asString metric)
         log.LogInformation (sprintf "Sales : %f" sales)
 
     [<FunctionName("metrics")>]
     let metrics ([<HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)>]req: HttpRequest) (log: ILogger) =
         async {
             log.LogInformation("Fetching prometheus metrics...")
+            // setup queue client
             let queueName = "logs"
             let connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage", EnvironmentVariableTarget.Process)
             let queueClient = QueueClient(connectionString, queueName)
+            
             if queueClient.Exists().Value then
+                // receive messages
                 let messages = queueClient.ReceiveMessages(Nullable<int>(32), Nullable<TimeSpan>(TimeSpan.FromSeconds(20.))).Value
                 log.LogInformation(sprintf "Received %i logs." messages.Length)
-                let sb = StringBuilder()
+                // return message as text
                 let processMessage (msg : QueueMessage) =
                     let txt = Encoding.UTF8.GetString(Convert.FromBase64String(msg.MessageText))
-                    sb.Append(sprintf "%s\n" txt) |> ignore
                     queueClient.DeleteMessage(msg.MessageId, msg.PopReceipt) |> ignore
-                messages |> Array.iter processMessage
-                let responseTxt = sb.ToString().TrimEnd()
+                    txt
+                let metrics = messages |> Array.map processMessage
+                // build up Prometheus text
+                let responseTxt = metricsBuilder.Build(metrics)
+                
+                // return as Prometheus HTTP content
                 let response = ContentResult()
                 response.Content <- responseTxt
                 response.ContentType <- "text/plain; version=0.0.4"

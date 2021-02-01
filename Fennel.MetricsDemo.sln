@@ -10,6 +10,8 @@ ProjectSection(SolutionItems) = preProject
 	docker-compose.yml = docker-compose.yml
 EndProjectSection
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "Tests\Tests.fsproj", "{EC9C9C0B-3ACB-4E3A-8E62-58C88733FE18}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,5 +22,9 @@ Global
 		{1E700AD2-7382-4A0A-A6AA-6BC62409FA62}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1E700AD2-7382-4A0A-A6AA-6BC62409FA62}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1E700AD2-7382-4A0A-A6AA-6BC62409FA62}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC9C9C0B-3ACB-4E3A-8E62-58C88733FE18}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC9C9C0B-3ACB-4E3A-8E62-58C88733FE18}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC9C9C0B-3ACB-4E3A-8E62-58C88733FE18}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC9C9C0B-3ACB-4E3A-8E62-58C88733FE18}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
